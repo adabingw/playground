@@ -28,16 +28,13 @@ def init_path():
                 gender = 1 if gender == 'm' else 0 
                 prediction = sunk.pred(pclass, gender, age)
                 print("your chances of surviving the titanic is ", prediction) 
-                run = False 
-                
+                run = False    
     elif module == 'transformer': 
         translator = runner.new_translator() 
         sentence = input('enter something to translate to english from portuguese: ')
         runner.translate(translator=translator, sentence=sentence, ground_truth="no ground truth")
-        print('trans')
     else: 
         print('cannot find module', module)
 
 if __name__ == "__main__":
-    # print(os.environ['PYTHONPATH'])
     init_path()

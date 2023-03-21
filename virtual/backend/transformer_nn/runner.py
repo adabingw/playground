@@ -37,8 +37,6 @@ def new_translator():
         target_vocab_size=tokenizers.en.get_vocab_size().numpy(),
         dropout_rate=DROPOUT_RATE)
     
-    print(os.path.realpath(__file__))
-
     checkpoint_path = './checkpoints/model'
     model.load_weights(checkpoint_path)
     
