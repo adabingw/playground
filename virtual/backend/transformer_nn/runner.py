@@ -37,7 +37,7 @@ def new_translator():
         target_vocab_size=tokenizers.en.get_vocab_size().numpy(),
         dropout_rate=DROPOUT_RATE)
     
-    checkpoint_path = './checkpoints/model'
+    checkpoint_path = 'checkpoints/model'
     model.load_weights(checkpoint_path)
     
     translator = Translator(tokenizers, model)
@@ -47,3 +47,8 @@ def translate(translator, sentence, ground_truth):
     translated_text, translated_tokens, attention_weights = translator(
         tf.constant(sentence))
     print_translation(sentence, translated_text, ground_truth)
+    
+if __name__ == "__main__":
+    translator = new_translator() 
+    sentence = input('enter something to translate to english from portuguese: ')
+    translate(translator=translator, sentence=sentence, ground_truth="no ground truth")
