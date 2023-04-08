@@ -2,8 +2,10 @@ import tensorflow as tf
 
 import tensorflow_text
 
-from transformer_nn.transformer import Transformer
-from transformer_nn.translator import Translator
+from transformer import Transformer
+from translator import Translator
+# from transformer_nn.transformer import Transformer
+# from transformer_nn.translator import Translator
 
 import warnings
 
@@ -21,13 +23,16 @@ DFF = 512
 NUM_HEADS = 8
 DROPOUT_RATE = 0.1
 
+CHECKPOINT_PATH = './checkpoints/model'
+
 def print_translation(sentence, tokens, ground_truth = "no ground truth provided"):
     print(f'{"Input:":15s}: {sentence}')
     print(f'{"Prediction":15s}: {tokens.numpy().decode("utf-8")}')
     print(f'{"Ground truth":15s}: {ground_truth}')
     
 def new_translator(): 
-    tokenizers = tf.saved_model.load('transformer_nn/ted_hrlr_translate_pt_en_converter')
+    tokenizers = tf.saved_model.load('./ted_hrlr_translate_pt_en_converter')
+    # tokenizers = tf.saved_model.load('transformer_nn/ted_hrlr_translate_pt_en_converter')
     model = Transformer(
         num_layers=NUM_LAYERS,
         d_model=D_MODEL,
@@ -37,8 +42,7 @@ def new_translator():
         target_vocab_size=tokenizers.en.get_vocab_size().numpy(),
         dropout_rate=DROPOUT_RATE)
     
-    checkpoint_path = 'checkpoints/model'
-    model.load_weights(checkpoint_path)
+    model.load_weights(CHECKPOINT_PATH).expect_partial()
     
     translator = Translator(tokenizers, model)
     return translator
@@ -46,6 +50,7 @@ def new_translator():
 def translate(translator, sentence, ground_truth): 
     translated_text, translated_tokens, attention_weights = translator(
         tf.constant(sentence))
+    print(translated_tokens)
     print_translation(sentence, translated_text, ground_truth)
     
 if __name__ == "__main__":

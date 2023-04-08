@@ -5,8 +5,10 @@ import tensorflow_datasets as tfds
 import tensorflow as tf
 # import tensorflow_text
 
-from transformer_nn.encoder import Encoder 
-from transformer_nn.decoder import Decoder 
+from encoder import Encoder 
+from decoder import Decoder
+# from transformer_nn.encoder import Encoder 
+# from transformer_nn.decoder import Decoder 
 
 class Transformer(tf.keras.Model):
     def __init__(self, *, num_layers, d_model, num_heads, dff,

@@ -1,9 +1,13 @@
 import tensorflow_datasets as tfds
 import tensorflow as tf
 
-from transformer_nn.trainer import CustomSchedule, masked_accuracy, masked_loss
-from transformer_nn.transformer import Transformer
-from transformer_nn.translator import Translator
+from trainer import CustomSchedule, masked_accuracy, masked_loss 
+from transformers import Transformer 
+from translator import Translator
+
+# from transformer_nn.trainer import CustomSchedule, masked_accuracy, masked_loss
+# from transformer_nn.transformer import Transformer
+# from transformer_nn.translator import Translator
 
 MAX_TOKENS=128
 BUFFER_SIZE = 20000

@@ -1,6 +1,10 @@
-from transformer_nn.attention import GlobalSelfAttention
-from transformer_nn.feedforward import FeedForward 
-from transformer_nn.positional import PositionalEmbedding
+# from transformer_nn.attention import GlobalSelfAttention
+# from transformer_nn.feedforward import FeedForward 
+# from transformer_nn.positional import PositionalEmbedding
+from attention import GlobalSelfAttention 
+from feedforward import FeedForward 
+from positional import PositionalEmbedding 
+
 import tensorflow as tf 
 
 class EncoderLayer(tf.keras.layers.Layer):

@@ -1,8 +1,12 @@
 import tensorflow as tf 
 
-from transformer_nn.feedforward import FeedForward 
-from transformer_nn.attention import CausalSelfAttention, CrossAttention
-from transformer_nn.positional import PositionalEmbedding
+from feedforward import FeedForward 
+from attention import CausalSelfAttention, CrossAttention
+from positional import PositionalEmbedding
+
+# from transformer_nn.feedforward import FeedForward 
+# from transformer_nn.attention import CausalSelfAttention, CrossAttention
+# from transformer_nn.positional import PositionalEmbedding
 
 class DecoderLayer(tf.keras.layers.Layer):
     # casual self attention 
