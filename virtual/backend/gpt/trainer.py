@@ -1,44 +1,109 @@
-from datasets import load_dataset, Dataset, DatasetDict
-import numpy as np
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead
-from tensorflow.keras.optimizers import Adam
+# pytorch
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 
-train_percentage = 0.9
-validation_percentage = 0.07
-test_percentage = 0.03
+from data import start
+import random
 
-# tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
-# def tokenize_function(examples):
-#     return tokenizer(examples["text"], padding="max_length", truncation=True)
+EPOCHS = 15
 
-# load dataset
-datasets = load_dataset("huggingartists/taylor-swift")
+def main():
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    
+    seed_data = random.randint(0,2**32-1)
+    
+    training_args = TrainingArguments(
+        output_dir="test_trainer",
+        overwrite_output_dir=True,
+        evaluation_strategy = "epoch",
+        learning_rate=1.372e-4,
+        weight_decay=0.01,
+        num_train_epochs=EPOCHS,
+        save_total_limit=10,
+        save_strategy='epoch',
+        save_steps=1,
+        report_to=None,
+        seed=seed_data,
+        logging_steps=5,
+        do_eval=True,
+        eval_steps=1,
+        load_best_model_at_end=True
+        # disable_tqdm=True
+        # load_best_model_at_end=True
+    )
+    
+    datasets = start()
+        
+    # print("dataset:", datasets) 
+    # print(datasets['train']['text']) 
+    # print(datasets['validation']['text'])
+    
+    def tokenize_function(dataset):
+        return tokenizer(dataset["text"])
+    
+    def group_texts(datasets):
+        # concatenate all texts.
+        concatenated_examples = {k: sum(datasets[k], []) for k in datasets.keys()}
+        total_length = len(concatenated_examples[list(datasets.keys())[0]])
+        total_length = (total_length // block_size) * block_size
+        
+        # split by chunks of max_len.
+        result = {
+            k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
+            for k, t in concatenated_examples.items()
+        }
+        result["labels"] = result["input_ids"].copy()
+        return result
+    
+    model = AutoModelForCausalLM.from_pretrained("gpt2")
+    tokenized_datasets = datasets.map(tokenize_function, batched=True, num_proc=1, remove_columns=["text"])
+    # block_size = tokenizer.model_max_length
+    block_size = int(tokenizer.model_max_length / 4)
 
-# test
+    lm_datasets = tokenized_datasets.map(
+        group_texts,
+        batched=True,
+        batch_size=1000,
+        num_proc=1,
+    )
+    
+    print(lm_datasets)
+    
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=lm_datasets["train"],
+        eval_dataset=lm_datasets["validation"]
+    )
+    trainer.train()
+    trainer.save_model("./lyricrr")
+    
+    text = "Silence"
 
-train, validation, test = np.split(datasets['train']['text'], [int(len(datasets['train']['text'])*train_percentage), int(len(datasets['train']['text'])*(train_percentage + validation_percentage))])
+    encoding = tokenizer(text, return_tensors="pt")
+    encoding = {k: v.to(trainer.model.device) for k,v in encoding.items()}
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
-tokenized_data = tokenizer(datasets["sentence"], return_tensors="np", padding=True)
-# Tokenizer returns a BatchEncoding, but we convert that to a dict for Keras
-tokenized_data = dict(tokenized_data)
-
-labels = np.array(datasets["label"])  # Label is already an array of 0 and 1
-
-# for i in range(7): 
-#     print(tokenized_data[i], labels[i])
-
-print(tokenized_data)
-print(labels)
-
-# datasets = DatasetDict(
-#     {
-#         'train': Dataset.from_dict({'text': list(train)}),
-#         'validation': Dataset.from_dict({'text': list(validation)}),
-#         'test': Dataset.from_dict({'text': list(test)})
-#     }
-# )
-
-model = AutoModelForSequenceClassification.from_pretrained("bert-base-cased", num_labels=5)
-model.compile(optimizer=Adam(3e-5))
-# model.fit(tokenized_data, labels)
+    outputs = trainer.model(**encoding)
+    print(outputs.logits.shape) 
+    print(outputs) 
+    print(outputs.logits)
+    
+if __name__ == "__main__":
+    # main()
+    # return
+    
+    text = "Most likely to"
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    
+    model = AutoModelForCausalLM.from_pretrained("./lyricrr")
+    
+    input_ids = tokenizer(text, return_tensors="pt").input_ids
+    
+    generated_outputs = model.generate(input_ids, 
+                                       max_new_tokens=70,
+                                       min_new_tokens=50, 
+                                       do_sample=True, 
+                                       num_return_sequences=20, 
+                                       output_scores=True)    
+    generated_decode = tokenizer.decode(generated_outputs[0])
+    
+    print(generated_decode)
