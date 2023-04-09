@@ -1,12 +1,15 @@
 # pytorch
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 
-from data import start
+from data import collect
 import random
+import pathlib
 
 EPOCHS = 15
+NAMESPACE = 'adabingw'
+MODEL_NAME = 'lyrr-lorde'
 
-def main():
+def get_model(): 
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
     
     seed_data = random.randint(0,2**32-1)
@@ -31,11 +34,7 @@ def main():
         # load_best_model_at_end=True
     )
     
-    datasets = start()
-        
-    # print("dataset:", datasets) 
-    # print(datasets['train']['text']) 
-    # print(datasets['validation']['text'])
+    datasets = collect()
     
     def tokenize_function(dataset):
         return tokenizer(dataset["text"])
@@ -77,25 +76,10 @@ def main():
     trainer.train()
     trainer.save_model("./lyricrr")
     
-    text = "Silence"
-
-    encoding = tokenizer(text, return_tensors="pt")
-    encoding = {k: v.to(trainer.model.device) for k,v in encoding.items()}
-
-    outputs = trainer.model(**encoding)
-    print(outputs.logits.shape) 
-    print(outputs) 
-    print(outputs.logits)
-    
-if __name__ == "__main__":
-    # main()
-    # return
-    
-    text = "Most likely to"
+def generator(text="I still remember"):    
+    model = AutoModelForCausalLM.from_pretrained(f"{NAMESPACE}/{MODEL_NAME}", cache_dir=pathlib.Path('cache').resolve())
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
-    
-    model = AutoModelForCausalLM.from_pretrained("./lyricrr")
-    
+        
     input_ids = tokenizer(text, return_tensors="pt").input_ids
     
     generated_outputs = model.generate(input_ids, 
@@ -105,5 +89,8 @@ if __name__ == "__main__":
                                        num_return_sequences=20, 
                                        output_scores=True)    
     generated_decode = tokenizer.decode(generated_outputs[0])
-    
     print(generated_decode)
+    
+if __name__ == "__main__":
+    get_model()
+    generator()
